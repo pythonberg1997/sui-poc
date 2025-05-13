@@ -76,6 +76,27 @@ func main() {
 		return
 	}
 
+	globalConfig, err := utils.NewSharedObjectRefFromObjectId(cli, "0xdaa46292632c3c4d8f31f23ea0f9b36a28ff3677e9684980e4438403a67a3d8f", true)
+	if err != nil {
+		fmt.Printf("Error creating global config reference: %v\n", err)
+		return
+	}
+	pool, err := utils.NewSharedObjectRefFromObjectId(cli, "0xb8d7d9e66a60c239e7a60110efcf8de6c705580ed924d0dde141f4a0e2c90105", true)
+	if err != nil {
+		fmt.Printf("Error creating pool reference: %v\n", err)
+		return
+	}
+	partner, err := utils.NewSharedObjectRefFromObjectId(cli, "0x639b5e433da31739e800cd085f356e64cae222966d0f1b11bd9dc76b322ff58b", true)
+	if err != nil {
+		fmt.Printf("Error creating partner reference: %v\n", err)
+		return
+	}
+	clock, err := utils.NewSharedObjectRefFromObjectId(cli, "0x6", false)
+	if err != nil {
+		fmt.Printf("Error creating clock reference: %v\n", err)
+		return
+	}
+
 	outCoin := tx.MoveCall(
 		models.SuiAddress(packageId),
 		module,
@@ -97,11 +118,31 @@ func main() {
 			},
 		},
 		[]transaction.Argument{
-			tx.Object("0xdaa46292632c3c4d8f31f23ea0f9b36a28ff3677e9684980e4438403a67a3d8f"),
-			tx.Object("0xb8d7d9e66a60c239e7a60110efcf8de6c705580ed924d0dde141f4a0e2c90105"),
-			tx.Object("0x639b5e433da31739e800cd085f356e64cae222966d0f1b11bd9dc76b322ff58b"),
+			tx.Object(transaction.CallArg{
+				Object: &transaction.ObjectArg{
+					SharedObject: globalConfig,
+				},
+			},
+			),
+			tx.Object(transaction.CallArg{
+				Object: &transaction.ObjectArg{
+					SharedObject: pool,
+				},
+			},
+			),
+			tx.Object(transaction.CallArg{
+				Object: &transaction.ObjectArg{
+					SharedObject: partner,
+				},
+			},
+			),
 			splitCoin,
-			tx.Object("0x0000000000000000000000000000000000000000000000000000000000000006"),
+			tx.Object(transaction.CallArg{
+				Object: &transaction.ObjectArg{
+					SharedObject: clock,
+				},
+			},
+			),
 		},
 	)
 

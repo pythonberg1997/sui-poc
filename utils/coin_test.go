@@ -93,10 +93,26 @@ func TestMergeCoin2(t *testing.T) {
 		SetGasPayment([]transaction.SuiObjectRef{*gasCoin}).
 		SetGasOwner(models.SuiAddress(suiSigner.Address))
 
+	dstCoinObj, err := NewOwnedObjectRefFromObjectId(cli, "0x903160997126fbcc591924dd948af3c5ba9082ae5a4025dcd12d89e76ad98e20")
+	require.NoError(t, err)
+
+	sourceCoinObj, err := NewOwnedObjectRefFromObjectId(cli, "0xa65f83d5804dc1efd8248591cf7ad8e441a12193dbf8eb967638aac771d618e4")
+	require.NoError(t, err)
+
 	tx.MergeCoins(
-		tx.Object("0x903160997126fbcc591924dd948af3c5ba9082ae5a4025dcd12d89e76ad98e20"),
+		tx.Object(transaction.CallArg{
+			Object: &transaction.ObjectArg{
+				ImmOrOwnedObject: dstCoinObj,
+			},
+		},
+		),
 		[]transaction.Argument{
-			tx.Object("0xa65f83d5804dc1efd8248591cf7ad8e441a12193dbf8eb967638aac771d618e4"),
+			tx.Object(transaction.CallArg{
+				Object: &transaction.ObjectArg{
+					ImmOrOwnedObject: sourceCoinObj,
+				},
+			},
+			),
 		},
 	)
 
@@ -110,5 +126,5 @@ func TestMergeCoin2(t *testing.T) {
 		"WaitForLocalExecution",
 	)
 	require.NoError(t, err)
-	fmt.Println(resp.Digest, resp.Effects, resp.Results)
+	fmt.Printf("Transaction success. digest: %v\n", resp.Digest)
 }

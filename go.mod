@@ -30,3 +30,5 @@ require (
 	golang.org/x/time v0.5.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/block-vision/sui-go-sdk v1.0.7 => github.com/pythonberg1997/sui-go-sdk v0.0.0-20250513031015-b382e3a4ec2e
