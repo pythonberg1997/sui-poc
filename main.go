@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sync"
+	"time"
 
 	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/sui"
@@ -36,6 +38,12 @@ func main() {
 		fmt.Printf("Error getting gas coin object: %v\n", err)
 		return
 	}
+
+	// initialVersion := gasCoinObj.Data.Version
+	// var wg sync.WaitGroup
+	// wg.Add(1)
+	// go monitorGasObjectVersion(ctx, suiClient, gasCoinObjectId, initialVersion, &wg)
+
 	gasCoin, err := transaction.NewSuiObjectRef(
 		models.SuiAddress(gasCoinObjectId),
 		gasCoinObj.Data.Version,
@@ -50,8 +58,6 @@ func main() {
 	tx.SetSuiClient(suiClient).
 		SetSigner(suiSigner).
 		SetSender(models.SuiAddress(signerAddress)).
-		SetGasPrice(1000).
-		SetGasBudget(50000000).
 		SetGasPayment([]transaction.SuiObjectRef{*gasCoin}).
 		SetGasOwner(models.SuiAddress(signerAddress))
 
@@ -149,6 +155,28 @@ func main() {
 	// 3. transfer coins
 	tx.TransferObjects([]transaction.Argument{outCoin}, tx.Pure(signerAddress))
 
+	// latestSequenceNumber, err := suiClient.SuiGetLatestCheckpointSequenceNumber(ctx)
+	// if err != nil {
+	// 	fmt.Printf("Error getting latest checkpoint sequence number: %v\n", err)
+	// 	return
+	// }
+	// fmt.Printf("Sequence number before execute: %d\n", latestSequenceNumber)
+	// fmt.Printf("Time before execute: %s\n", time.Now().Format(time.RFC3339Nano))
+
+	gasPrice, err := suiClient.SuiXGetReferenceGasPrice(ctx)
+	if err != nil {
+		fmt.Printf("Error getting gas price: %v\n", err)
+		return
+	}
+	tx.SetGasPrice(uint64(float64(gasPrice) * 1.05))
+
+	gasBudget, err := utils.EstimateGasBudge(ctx, suiClient, tx)
+	if err != nil {
+		fmt.Printf("Error estimating gas budge: %v\n", err)
+		return
+	}
+	tx.SetGasBudget(uint64(float64(gasBudget) * 1.2))
+
 	resp, err := tx.Execute(
 		ctx,
 		models.SuiTransactionBlockOptions{
@@ -165,6 +193,42 @@ func main() {
 		fmt.Printf("Error executing transaction: %v\n", err)
 		return
 	}
-
 	fmt.Println(resp.Digest, resp.Effects, resp.Results)
+}
+
+func monitorGasObjectVersion(ctx context.Context, client *sui.Client, objectId string, initialVersion string, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	startTime := time.Now()
+	fmt.Printf("Starting to monitor gas object with initial version: %s at time: %s\n", initialVersion, startTime.Format(time.RFC3339))
+
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			obj, err := client.SuiGetObject(ctx, models.SuiGetObjectRequest{ObjectId: objectId})
+			if err != nil {
+				fmt.Printf("Error checking gas object: %v\n", err)
+				continue
+			}
+
+			currentVersion := obj.Data.Version
+
+			if currentVersion != initialVersion {
+				elapsed := time.Since(startTime)
+				fmt.Printf("Gas object version changed from %s to %s\n", initialVersion, currentVersion)
+				fmt.Printf("Time elapsed: %s\n", elapsed)
+				fmt.Printf("New version detected at: %s\n", time.Now().Format(time.RFC3339Nano))
+
+				latestSequenceNumber, _ := client.SuiGetLatestCheckpointSequenceNumber(ctx)
+				fmt.Printf("Sequence number: %d\n", latestSequenceNumber)
+				return
+			}
+		case <-ctx.Done():
+			fmt.Println("Context cancelled, stopping monitoring")
+			return
+		}
+	}
 }
