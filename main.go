@@ -82,7 +82,7 @@ func main() {
 		return
 	}
 
-	globalConfig, err := utils.NewSharedObjectRefFromObjectId(cli, "0xdaa46292632c3c4d8f31f23ea0f9b36a28ff3677e9684980e4438403a67a3d8f", true)
+	globalConfig, err := utils.NewSharedObjectRefFromObjectId(cli, "0xdaa46292632c3c4d8f31f23ea0f9b36a28ff3677e9684980e4438403a67a3d8f", false)
 	if err != nil {
 		fmt.Printf("Error creating global config reference: %v\n", err)
 		return
@@ -176,6 +176,25 @@ func main() {
 		return
 	}
 	tx.SetGasBudget(uint64(float64(gasBudget) * 1.2))
+
+	req, err := tx.ToSuiExecuteTransactionBlockRequest(
+		ctx,
+		models.SuiTransactionBlockOptions{
+			ShowInput:          true,
+			ShowRawInput:       true,
+			ShowEffects:        true,
+			ShowEvents:         true,
+			ShowObjectChanges:  true,
+			ShowBalanceChanges: true,
+		},
+		"WaitForLocalExecution",
+	)
+	if err != nil {
+		fmt.Printf("Error converting transaction to request: %v\n", err)
+		return
+	}
+	fmt.Printf("tx bytes: %s\n", req.TxBytes)
+	fmt.Printf("tx sig: %s\n", req.Signature[0])
 
 	resp, err := tx.Execute(
 		ctx,

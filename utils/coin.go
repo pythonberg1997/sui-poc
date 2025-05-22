@@ -8,7 +8,7 @@ import (
 	"github.com/block-vision/sui-go-sdk/sui"
 )
 
-func GetCoinObjectId(client sui.ISuiAPI, signerAddress, coinType string) ([]models.CoinData, error) {
+func GetCoinObjectData(client sui.ISuiAPI, signerAddress, coinType string) ([]models.CoinData, error) {
 	ctx := context.Background()
 	ownedCoins, err := client.SuiXGetCoins(ctx, models.SuiXGetCoinsRequest{
 		Owner:    signerAddress,
