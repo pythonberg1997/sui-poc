@@ -24,7 +24,10 @@ func main() {
 		panic("not sui client")
 	}
 
-	godotenv.Load(".env")
+	if err := godotenv.Load(".env"); err != nil {
+		fmt.Println("Error loading .env:", err)
+		return
+	}
 	suiSigner, err := utils.NewSignerFromSecretKey(os.Getenv("PRIVATE_KEY"))
 	if err != nil {
 		fmt.Println("Error creating signer:", err)
