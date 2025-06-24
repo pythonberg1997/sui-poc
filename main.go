@@ -42,10 +42,8 @@ func main() {
 		return
 	}
 
-	// initialVersion := gasCoinObj.Data.Version
-	// var wg sync.WaitGroup
-	// wg.Add(1)
-	// go monitorGasObjectVersion(ctx, suiClient, gasCoinObjectId, initialVersion, &wg)
+	fmt.Printf("initial gas coin object version: %s\n", gasCoinObj.Data.Version)
+	fmt.Printf("initial gas coin object digest: %s\n", gasCoinObj.Data.Digest)
 
 	gasCoin, err := transaction.NewSuiObjectRef(
 		models.SuiAddress(gasCoinObjectId),
@@ -69,102 +67,94 @@ func main() {
 		tx.Pure(uint64(1000000000 * 0.0001)),
 	})
 
-	// 2. move call
-	packageId := "0x11451575c775a3e633437b827ecbc1eb51a5964b0302210b28f5b89880be21a2"
-	module := "cetus"
-	funcName := "swap_b2a"
-
-	coinAAddressBytes, err := transaction.ConvertSuiAddressStringToBytes("0xdba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7")
-	if err != nil {
-		fmt.Printf("Error converting coin A address: %v\n", err)
-		return
-	}
-	coinBAddressBytes, err := transaction.ConvertSuiAddressStringToBytes("0x0000000000000000000000000000000000000000000000000000000000000002")
-	if err != nil {
-		fmt.Printf("Error converting coin B address: %v\n", err)
-		return
-	}
-
-	globalConfig, err := utils.NewSharedObjectRefFromObjectId(cli, "0xdaa46292632c3c4d8f31f23ea0f9b36a28ff3677e9684980e4438403a67a3d8f", false)
-	if err != nil {
-		fmt.Printf("Error creating global config reference: %v\n", err)
-		return
-	}
-	pool, err := utils.NewSharedObjectRefFromObjectId(cli, "0xb8d7d9e66a60c239e7a60110efcf8de6c705580ed924d0dde141f4a0e2c90105", true)
-	if err != nil {
-		fmt.Printf("Error creating pool reference: %v\n", err)
-		return
-	}
-	partner, err := utils.NewSharedObjectRefFromObjectId(cli, "0x639b5e433da31739e800cd085f356e64cae222966d0f1b11bd9dc76b322ff58b", true)
-	if err != nil {
-		fmt.Printf("Error creating partner reference: %v\n", err)
-		return
-	}
-	clock, err := utils.NewSharedObjectRefFromObjectId(cli, "0x6", false)
-	if err != nil {
-		fmt.Printf("Error creating clock reference: %v\n", err)
-		return
-	}
-
-	outCoin := tx.MoveCall(
-		models.SuiAddress(packageId),
-		module,
-		funcName,
-		[]transaction.TypeTag{
-			{
-				Struct: &transaction.StructTag{
-					Address: *coinAAddressBytes,
-					Module:  "usdc",
-					Name:    "USDC",
-				},
-			},
-			{
-				Struct: &transaction.StructTag{
-					Address: *coinBAddressBytes,
-					Module:  "sui",
-					Name:    "SUI",
-				},
-			},
-		},
-		[]transaction.Argument{
-			tx.Object(transaction.CallArg{
-				Object: &transaction.ObjectArg{
-					SharedObject: globalConfig,
-				},
-			},
-			),
-			tx.Object(transaction.CallArg{
-				Object: &transaction.ObjectArg{
-					SharedObject: pool,
-				},
-			},
-			),
-			tx.Object(transaction.CallArg{
-				Object: &transaction.ObjectArg{
-					SharedObject: partner,
-				},
-			},
-			),
-			splitCoin,
-			tx.Object(transaction.CallArg{
-				Object: &transaction.ObjectArg{
-					SharedObject: clock,
-				},
-			},
-			),
-		},
-	)
-
-	// 3. transfer coins
-	tx.TransferObjects([]transaction.Argument{outCoin}, tx.Pure(signerAddress))
-
-	// latestSequenceNumber, err := suiClient.SuiGetLatestCheckpointSequenceNumber(ctx)
+	// // 2. move call
+	// packageId := "0x11451575c775a3e633437b827ecbc1eb51a5964b0302210b28f5b89880be21a2"
+	// module := "cetus"
+	// funcName := "swap_b2a"
+	//
+	// coinAAddressBytes, err := transaction.ConvertSuiAddressStringToBytes("0xdba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7")
 	// if err != nil {
-	// 	fmt.Printf("Error getting latest checkpoint sequence number: %v\n", err)
+	// 	fmt.Printf("Error converting coin A address: %v\n", err)
 	// 	return
 	// }
-	// fmt.Printf("Sequence number before execute: %d\n", latestSequenceNumber)
-	// fmt.Printf("Time before execute: %s\n", time.Now().Format(time.RFC3339Nano))
+	// coinBAddressBytes, err := transaction.ConvertSuiAddressStringToBytes("0x0000000000000000000000000000000000000000000000000000000000000002")
+	// if err != nil {
+	// 	fmt.Printf("Error converting coin B address: %v\n", err)
+	// 	return
+	// }
+	//
+	// globalConfig, err := utils.NewSharedObjectRefFromObjectId(cli, "0xdaa46292632c3c4d8f31f23ea0f9b36a28ff3677e9684980e4438403a67a3d8f", false)
+	// if err != nil {
+	// 	fmt.Printf("Error creating global config reference: %v\n", err)
+	// 	return
+	// }
+	// pool, err := utils.NewSharedObjectRefFromObjectId(cli, "0xb8d7d9e66a60c239e7a60110efcf8de6c705580ed924d0dde141f4a0e2c90105", true)
+	// if err != nil {
+	// 	fmt.Printf("Error creating pool reference: %v\n", err)
+	// 	return
+	// }
+	// partner, err := utils.NewSharedObjectRefFromObjectId(cli, "0x639b5e433da31739e800cd085f356e64cae222966d0f1b11bd9dc76b322ff58b", true)
+	// if err != nil {
+	// 	fmt.Printf("Error creating partner reference: %v\n", err)
+	// 	return
+	// }
+	// clock, err := utils.NewSharedObjectRefFromObjectId(cli, "0x6", false)
+	// if err != nil {
+	// 	fmt.Printf("Error creating clock reference: %v\n", err)
+	// 	return
+	// }
+	//
+	// outCoin := tx.MoveCall(
+	// 	models.SuiAddress(packageId),
+	// 	module,
+	// 	funcName,
+	// 	[]transaction.TypeTag{
+	// 		{
+	// 			Struct: &transaction.StructTag{
+	// 				Address: *coinAAddressBytes,
+	// 				Module:  "usdc",
+	// 				Name:    "USDC",
+	// 			},
+	// 		},
+	// 		{
+	// 			Struct: &transaction.StructTag{
+	// 				Address: *coinBAddressBytes,
+	// 				Module:  "sui",
+	// 				Name:    "SUI",
+	// 			},
+	// 		},
+	// 	},
+	// 	[]transaction.Argument{
+	// 		tx.Object(transaction.CallArg{
+	// 			Object: &transaction.ObjectArg{
+	// 				SharedObject: globalConfig,
+	// 			},
+	// 		},
+	// 		),
+	// 		tx.Object(transaction.CallArg{
+	// 			Object: &transaction.ObjectArg{
+	// 				SharedObject: pool,
+	// 			},
+	// 		},
+	// 		),
+	// 		tx.Object(transaction.CallArg{
+	// 			Object: &transaction.ObjectArg{
+	// 				SharedObject: partner,
+	// 			},
+	// 		},
+	// 		),
+	// 		splitCoin,
+	// 		tx.Object(transaction.CallArg{
+	// 			Object: &transaction.ObjectArg{
+	// 				SharedObject: clock,
+	// 			},
+	// 		},
+	// 		),
+	// 	},
+	// )
+
+	// 3. transfer coins
+	tx.TransferObjects([]transaction.Argument{splitCoin}, tx.Pure(signerAddress))
 
 	gasPrice, err := suiClient.SuiXGetReferenceGasPrice(ctx)
 	if err != nil {
@@ -180,24 +170,36 @@ func main() {
 	}
 	tx.SetGasBudget(uint64(float64(gasBudget) * 1.2))
 
-	req, err := tx.ToSuiExecuteTransactionBlockRequest(
-		ctx,
-		models.SuiTransactionBlockOptions{
-			ShowInput:          true,
-			ShowRawInput:       true,
-			ShowEffects:        true,
-			ShowEvents:         true,
-			ShowObjectChanges:  true,
-			ShowBalanceChanges: true,
-		},
-		"WaitForLocalExecution",
-	)
+	// req, err := tx.ToSuiExecuteTransactionBlockRequest(
+	// 	ctx,
+	// 	models.SuiTransactionBlockOptions{
+	// 		ShowInput:          true,
+	// 		ShowRawInput:       true,
+	// 		ShowEffects:        true,
+	// 		ShowEvents:         true,
+	// 		ShowObjectChanges:  true,
+	// 		ShowBalanceChanges: true,
+	// 	},
+	// 	"WaitForLocalExecution",
+	// )
+	// if err != nil {
+	// 	fmt.Printf("Error converting transaction to request: %v\n", err)
+	// 	return
+	// }
+	// fmt.Printf("tx bytes: %s\n", req.TxBytes)
+	// fmt.Printf("tx sig: %s\n", req.Signature[0])
+
+	latestSequenceNumber, err := suiClient.SuiGetLatestCheckpointSequenceNumber(ctx)
 	if err != nil {
-		fmt.Printf("Error converting transaction to request: %v\n", err)
+		fmt.Printf("Error getting latest checkpoint sequence number: %v\n", err)
 		return
 	}
-	fmt.Printf("tx bytes: %s\n", req.TxBytes)
-	fmt.Printf("tx sig: %s\n", req.Signature[0])
+	fmt.Printf("Sequence number before execute: %d\n", latestSequenceNumber)
+	fmt.Printf("Time before execute: %s\n", time.Now().Format(time.RFC3339Nano))
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go monitorGasObjectVersion(ctx, suiClient, gasCoinObjectId, gasCoinObj.Data.Version, &wg)
 
 	resp, err := tx.Execute(
 		ctx,
@@ -216,6 +218,8 @@ func main() {
 		return
 	}
 	fmt.Println(resp.Digest, resp.Effects, resp.Results)
+
+	wg.Wait()
 }
 
 func monitorGasObjectVersion(ctx context.Context, client *sui.Client, objectId string, initialVersion string, wg *sync.WaitGroup) {
@@ -240,7 +244,8 @@ func monitorGasObjectVersion(ctx context.Context, client *sui.Client, objectId s
 
 			if currentVersion != initialVersion {
 				elapsed := time.Since(startTime)
-				fmt.Printf("Gas object version changed from %s to %s\n", initialVersion, currentVersion)
+				fmt.Printf("New gas coin object version: %s\n", currentVersion)
+				fmt.Printf("New gas coin object digest: %s\n", obj.Data.Digest)
 				fmt.Printf("Time elapsed: %s\n", elapsed)
 				fmt.Printf("New version detected at: %s\n", time.Now().Format(time.RFC3339Nano))
 
